@@ -136,11 +136,42 @@ function render(){$("nonStriker").value=match.nonStriker||"";
  $("balls").innerHTML=i.balls.length?i.balls.map((b,n)=>`<span class="ball" title="Ball ${n+1}: ${escapeHtml(b.detail)}">${escapeHtml(b.label)}</span>`).join(""):'<span class="muted">No balls recorded yet.</span>';
  $("summary").innerHTML=match.inningsData.map((x,n)=>`<tr><td>${n+1}</td><td>${escapeHtml(match.teams[n])}</td><td>${scoreString(x)}</td><td>${oversText(x.legalBalls)}</td></tr>`).join("");
  $("teamA").value=match.teams[0];$("teamB").value=match.teams[1];
- $("batter").value=match.batter||"";$("bowler").value=match.bowler||"";
-}
+ $("batter").value=match.batter||"";$("bowler").value=match.bowler||"";}
 function escapeHtml(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
-function requireScorer(){if(!currentUser){notice("Please log in with the scorer account first.");return false;}if(match.finished||current().legalBalls>=36){notice("This innings is complete.");return false;}return true;}
+function requireScorer(){if(!currentUser){notice("Please log in with the scorer account first.");return false;}if(match.finished||current().legalBalls>=36){notice("This innings is complete.");return false;}return true;} 
 function addBall({runs=0,type="normal",extra=0,wicket=false,label=null}){
+ if(!requireScorer())return;
+ const i=current();
+ const legal=type!=="wide"&&type!=="noBall";
+ const striker=match.batter||"Batter";
+ i.runs+=runs+extra;
+ if(type==="wide")i.extras.wide+=extra;
+ if(type==="noBall")i.extras.noBall+=extra;
+ if(type==="bye")i.extras.bye+=extra;
+ if(type==="legBye")i.extras.legBye+=extra;
+ if(legal)i.legalBalls++;
+ if(wicket)i.wickets++;
+ if(!match.batterStats)match.batterStats={};
+ if(!match.batterStats[striker])match.batterStats[striker]={runs:0,balls:0,fours:0,sixes:0};
+ const s=match.batterStats[striker];
+ if(type==="normal")s.runs+=runs;
+ if(type==="normal"&&runs===4)s.fours++;
+ if(type==="normal"&&runs===6)s.sixes++;
+ if(type!=="wide")s.balls++;
+ const detail=wicket?"Wicket":type==="normal"?`${runs} run(s)`:`${type}: ${extra} extra(s)`;
+ i.balls.push({runs,type,extra,wicket,legal,label:label||(wicket?"W":type==="normal"?String(runs):type==="wide"?"Wd":type==="noBall"?"Nb":type==="bye"?"B":"Lb"),detail});
+ match.started=true;
+ if(type==="normal"&&runs%2===1){
+  const t=match.batter;match.batter=match.nonStriker;match.nonStriker=t;
+ }
+ if(legal&&i.legalBalls%6===0){
+  const t=match.batter;match.batter=match.nonStriker;match.nonStriker=t;
+  match.overComplete=true;
+  notice("Over complete! Change bowler.");
+ }
+ if(i.legalBalls>=36||(match.innings===1&&i.runs>match.inningsData[0].runs))match.finished=true;
+ render();persist();
+}
  if(!requireScorer())return;
  const i=current(); const legal=type!=="wide"&&type!=="noBall";
  i.runs+=runs+extra;
