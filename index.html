@@ -156,7 +156,7 @@ function addBall({runs=0,type="normal",extra=0,wicket=false,label=null}){
  if(i.legalBalls>=36 || (match.innings===1 && i.runs>match.inningsData[0].runs)) match.finished=true;
  render();persist();
 }
-$("saveSetup").onclick=()=>{if(!currentUser){notice("Login required to save match names.");return;}match.teams=[$("teamA").value.trim()||"Team A",$("teamB").value.trim()||"Team B"];match.batter=$("batter").value.trim();match.bowler=$("bowler").value.trim();render();persist();notice("Match details saved.");};
+$("saveSetup").onclick=()=>{if(!currentUser){notice("Login required to save match names.");return;}match.teams=[$("teamA").value.trim()||"Team A",$("teamB").value.trim()||"Team B"];match.batter=$("batter").value.trim();$("nonStriker").value.trim();match.bowlermatch.bowler=$("bowler").value.trim();render();persist();notice("Match details saved.");};
 document.querySelectorAll("[data-run]").forEach(b=>b.onclick=()=>addBall({runs:Number(b.dataset.run),label:b.dataset.run==="4"?"4":b.dataset.run==="6"?"6":b.dataset.run}));
 $("addExtra").onclick=()=>{const type=$("extraType").value;const extra=Math.max(1,Math.min(7,Number($("extraRuns").value)||1));addBall({type,extra,label:type==="wide"?"Wd":type==="noBall"?"Nb":type==="bye"?"B":"Lb"});};
 $("wicketBtn").onclick=()=>addBall({wicket:true,label:"W"});
