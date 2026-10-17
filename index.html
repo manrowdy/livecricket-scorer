@@ -124,7 +124,7 @@ function oversText(b){return `${Math.floor(b/6)}.${b%6}`;}
 function totalExtras(i){return Object.values(i.extras).reduce((a,b)=>a+b,0);}
 function scoreString(i){return `${i.runs}/${i.wickets}`;}
 function persist(){ if(!db || !match || !currentUser) return Promise.resolve(); saveQueue=saveQueue.then(()=>set(ref(db,`matches/${safePath}`),match)).catch(e=>notice("Save error: "+e.message)); return saveQueue; }
-function render(){
+function render(){$("nonStriker").value=match.nonStriker||"";
  if(!match)return;
  const i=current();
  $("teamsLabel").textContent=`${match.teams[0]} vs ${match.teams[1]}`;
