@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#10251d">
+<title>Local Cricket Live Score</title>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#14231c;background:#f3f6f4}
+*{box-sizing:border-box}body{margin:0}header{background:#10251d;color:white;padding:22px 16px}
+main{max-width:900px;margin:auto;padding:16px}.brand{font-size:13px;opacity:.8;letter-spacing:.08em;text-transform:uppercase}
+h1{margin:5px 0;font-size:clamp(24px,5vw,36px)}h2{font-size:18px;margin:0 0 12px}
+.panel{background:white;border-radius:16px;padding:16px;margin:14px 0;box-shadow:0 2px 10px #10251d0c}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+label{display:block;font-size:13px;color:#51635a;margin:0 0 5px}
+input,select{width:100%;padding:11px;border:1px solid #cbd6cf;border-radius:9px;font:inherit;background:white}
+button{border:0;border-radius:10px;padding:12px 14px;font:inherit;font-weight:650;cursor:pointer;background:#176b48;color:white}
+button.secondary{background:#e7efe9;color:#17452f}button.danger{background:#a52b2b}button:disabled{opacity:.45;cursor:not-allowed}
+.actions{display:flex;gap:8px;flex-wrap:wrap}.actions button{flex:1;min-width:70px}
+.score{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.bigscore{font-size:clamp(36px,8vw,54px);font-weight:800;line-height:1.1;letter-spacing:-.04em}
+.muted{color:#63746a;font-size:13px}.pill{display:inline-block;padding:5px 9px;border-radius:20px;background:#e7efe9;color:#17452f;font-size:12px;font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:9px 6px;border-bottom:1px solid #e7ece8}th{font-size:12px;color:#64746b}
+#notice{margin-top:10px;font-size:13px}.hidden{display:none!important}.ball{display:inline-flex;min-width:29px;height:29px;align-items:center;justify-content:center;background:#e9f0eb;border-radius:50%;margin:3px;font-size:12px;font-weight:700}
+footer{text-align:center;color:#718077;font-size:12px;padding:22px}
+@media(max-width:520px){main{padding:10px}.panel{padding:13px}.grid{grid-template-columns:1fr 1fr}.grid .wide{grid-column:1/-1}button{padding:11px 10px}}
+</style>
+</head>
+<body>
+<header><div class="brand">LOCAL TOURNAMENT • LIVE</div><h1>🏏 Live Cricket Score</h1><div>6-over match scoreboard · లైవ్ స్కోర్</div></header>
+<main>
+<section class="panel">
+ <div class="score"><div><div id="teamsLabel" class="muted">Team A vs Team B</div><div class="bigscore"><span id="runs">0</span>/<span id="wickets">0</span></div><div><strong id="overs">0.0</strong> overs <span class="muted">of 6</span></div></div><div><span id="status" class="pill">Waiting to start</span><p class="muted" id="targetText">Target: —</p></div></div>
+ <div id="notice" role="status">Connecting…</div>
+ <div class="actions" style="margin-top:12px"><button class="secondary" id="shareBtn">🔗 Share live score</button><button class="secondary" id="copyBtn">Copy match link</button></div>
+</section>
+
+<section class="panel">
+ <h2>Match setup / మ్యాచ్ వివరాలు</h2>
+ <div class="grid">
+  <div><label for="teamA">Team A</label><input id="teamA" value="Team A" maxlength="40"></div>
+  <div><label for="teamB">Team B</label><input id="teamB" value="Team B" maxlength="40"></div>
+  <div><label for="batter">Striker</label><input id="batter" placeholder="Batter name" maxlength="40"></div>
+  <div><label for="bowler">Bowler</label><input id="bowler" placeholder="Bowler name" maxlength="40"></div>
+  <div class="wide"><button id="saveSetup" class="secondary">Save match names</button></div>
+ </div>
+</section>
+
+<section class="panel">
+ <div class="score"><h2>Ball-by-ball / ప్రతి బాల్</h2><span id="innings" class="pill">Innings 1</span></div>
+ <div id="balls" aria-live="polite"></div>
+ <p class="muted">Legal balls count toward overs. Wides and no-balls add one extra and do not count as a legal ball.</p>
+</section>
+
+<section class="panel">
+ <h2>Score controls / స్కోర్ ఎంటర్ చేయి</h2>
+ <div id="loginBox">
+  <p class="muted">Scorer login required to change the score. Viewers can watch without signing in.</p>
+  <div class="grid">
+   <div><label for="email">Scorer email</label><input id="email" type="email" autocomplete="username" placeholder="your scorer email"></div>
+   <div><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" placeholder="Firebase Auth password"></div>
+  </div>
+  <div class="actions" style="margin-top:10px"><button id="loginBtn">Scorer login</button><button id="logoutBtn" class="secondary hidden">Log out</button></div>
+ </div>
+ <div id="controls" class="hidden">
+  <p class="muted">Signed in as scorer. Tap the result for this delivery.</p>
+  <div class="actions"><button data-run="0">Dot · 0</button><button data-run="1">1 run</button><button data-run="2">2 runs</button><button data-run="3">3 runs</button><button data-run="4">Four · 4</button><button data-run="6">Six · 6</button></div>
+  <div class="grid" style="margin-top:10px">
+   <div><label for="extraType">Extra type</label><select id="extraType"><option value="wide">Wide</option><option value="noBall">No-ball</option><option value="bye">Bye</option><option value="legBye">Leg-bye</option></select></div>
+   <div><label for="extraRuns">Extra runs (including 1 automatic wide/no-ball)</label><input id="extraRuns" type="number" min="1" max="7" value="1"></div>
+  </div>
+  <div class="actions" style="margin-top:8px"><button id="addExtra" class="secondary">Add extra</button><button id="wicketBtn" class="danger">Wicket</button><button id="undoBtn" class="secondary">Undo last ball</button></div>
+  <div class="actions" style="margin-top:8px"><button id="nextInnings" class="secondary">Start innings 2</button><button id="resetBtn" class="danger">Reset match</button></div>
+ </div>
+</section>
+
+<section class="panel">
+ <h2>Extras / ఎక్స్‌ట్రాలు</h2>
+ <div class="grid">
+  <div><label>Wides</label><div><strong id="wideTotal">0</strong></div></div>
+  <div><label>No-balls</label><div><strong id="noBallTotal">0</strong></div></div>
+  <div><label>Byes</label><div><strong id="byeTotal">0</strong></div></div>
+  <div><label>Leg-byes</label><div><strong id="legByeTotal">0</strong></div></div>
+ </div>
+</section>
+
+<section class="panel">
+ <h2>Innings summary</h2>
+ <table><thead><tr><th>Innings</th><th>Team</th><th>Score</th><th>Overs</th></tr></thead><tbody id="summary"></tbody></table>
+</section>
+</main>
+<footer>Live updates powered by Firebase Realtime Database. Keep your scorer login private.</footer>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+
+// Replace this object with the config shown in Firebase Console > Project settings > Your apps.
+const firebaseConfig = {
+  apiKey: "AIzaSyATlarZdCLoK8fxcrzmwAIKYVfH5waFwuM",
+  authDomain: "live-score-2198a.firebaseapp.com.",
+  databaseURL: "https://live-score-2198a-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "live-score-2198a",
+  appId: "1:307362171681:web:f058f2c4c0b1159f028c60"
+};
+const configured = !Object.values(firebaseConfig).some(v => String(v).startsWith("PASTE_"));
+const $ = id => document.getElementById(id);
+const notice = msg => $("notice").textContent = msg;
+let app, auth, db, currentUser = null, match = null, saveQueue = Promise.resolve();
+const path = new URLSearchParams(location.search).get("match") || "main";
+const safePath = path.replace(/[^a-zA-Z0-9_-]/g,"").slice(0,40) || "main";
+const defaultMatch = () => ({
+  teams:["Team A","Team B"], innings:0,
+  inningsData:[
+    {runs:0,wickets:0,legalBalls:0,extras:{wide:0,noBall:0,bye:0,legBye:0},balls:[]},
+    {runs:0,wickets:0,legalBalls:0,extras:{wide:0,noBall:0,bye:0,legBye:0},balls:[]}
+  ],
+  batter:"",bowler:"",started:false,finished:false
+});
+function current(){return match.inningsData[match.innings];}
+function oversText(b){return `${Math.floor(b/6)}.${b%6}`;}
+function totalExtras(i){return Object.values(i.extras).reduce((a,b)=>a+b,0);}
+function scoreString(i){return `${i.runs}/${i.wickets}`;}
+function persist(){ if(!db || !match || !currentUser) return Promise.resolve(); saveQueue=saveQueue.then(()=>set(ref(db,`matches/${safePath}`),match)).catch(e=>notice("Save error: "+e.message)); return saveQueue; }
+function render(){
+ if(!match)return;
+ const i=current();
+ $("teamsLabel").textContent=`${match.teams[0]} vs ${match.teams[1]}`;
+ $("runs").textContent=i.runs;$("wickets").textContent=i.wickets;$("overs").textContent=oversText(i.legalBalls);
+ $("innings").textContent=`Innings ${match.innings+1}`;
+ $("wideTotal").textContent=i.extras.wide;$("noBallTotal").textContent=i.extras.noBall;$("byeTotal").textContent=i.extras.bye;$("legByeTotal").textContent=i.extras.legBye;
+ $("targetText").textContent=match.innings===1?`Target: ${match.inningsData[0].runs+1}`:"Target: —";
+ $("status").textContent=match.finished?"Match finished":i.legalBalls>=36?"Overs completed":match.started?"Live":"Waiting to start";
+ $("balls").innerHTML=i.balls.length?i.balls.map((b,n)=>`<span class="ball" title="Ball ${n+1}: ${escapeHtml(b.detail)}">${escapeHtml(b.label)}</span>`).join(""):'<span class="muted">No balls recorded yet.</span>';
+ $("summary").innerHTML=match.inningsData.map((x,n)=>`<tr><td>${n+1}</td><td>${escapeHtml(match.teams[n])}</td><td>${scoreString(x)}</td><td>${oversText(x.legalBalls)}</td></tr>`).join("");
+ $("teamA").value=match.teams[0];$("teamB").value=match.teams[1];
+ $("batter").value=match.batter||"";$("bowler").value=match.bowler||"";
+}
+function escapeHtml(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function requireScorer(){if(!currentUser){notice("Please log in with the scorer account first.");return false;}if(match.finished||current().legalBalls>=36){notice("This innings is complete.");return false;}return true;}
+function addBall({runs=0,type="normal",extra=0,wicket=false,label=null}){
+ if(!requireScorer())return;
+ const i=current(); const legal=type!=="wide"&&type!=="noBall";
+ i.runs+=runs+extra;
+ if(type==="wide")i.extras.wide+=extra;
+ if(type==="noBall")i.extras.noBall+=extra;
+ if(type==="bye")i.extras.bye+=extra;
+ if(type==="legBye")i.extras.legBye+=extra;
+ if(legal)i.legalBalls++;
+ if(wicket)i.wickets++;
+ const detail = wicket?"Wicket":type==="normal"?`${runs} run(s)`: `${type}: ${extra} extra(s)`;
+ i.balls.push({runs,type,extra,wicket,legal,label:label||(wicket?"W":type==="normal"?String(runs):type==="wide"?"Wd":type==="noBall"?"Nb":type==="bye"?"B":"Lb"),detail});
+ match.started=true;
+ if(i.legalBalls>=36 || (match.innings===1 && i.runs>match.inningsData[0].runs)) match.finished=true;
+ render();persist();
+}
+$("saveSetup").onclick=()=>{if(!currentUser){notice("Login required to save match names.");return;}match.teams=[$("teamA").value.trim()||"Team A",$("teamB").value.trim()||"Team B"];match.batter=$("batter").value.trim();match.bowler=$("bowler").value.trim();render();persist();notice("Match details saved.");};
+document.querySelectorAll("[data-run]").forEach(b=>b.onclick=()=>addBall({runs:Number(b.dataset.run),label:b.dataset.run==="4"?"4":b.dataset.run==="6"?"6":b.dataset.run}));
+$("addExtra").onclick=()=>{const type=$("extraType").value;const extra=Math.max(1,Math.min(7,Number($("extraRuns").value)||1));addBall({type,extra,label:type==="wide"?"Wd":type==="noBall"?"Nb":type==="bye"?"B":"Lb"});};
+$("wicketBtn").onclick=()=>addBall({wicket:true,label:"W"});
+$("undoBtn").onclick=()=>{if(!currentUser||!current().balls.length)return;const i=current();const b=i.balls.pop();i.runs-=b.runs+b.extra;if(b.type!=="normal")i.extras[b.type]-=b.extra;if(b.legal)i.legalBalls--;if(b.wicket)i.wickets--;match.finished=false;render();persist();notice("Last ball undone.");};
+$("nextInnings").onclick=()=>{if(!currentUser)return notice("Scorer login required.");if(match.innings===1)return notice("Both innings already started.");match.innings=1;match.finished=false;match.started=true;render();persist();notice("Innings 2 started.");};
+$("resetBtn").onclick=()=>{if(!currentUser)return notice("Scorer login required.");if(confirm("Reset the whole match? This clears all scores for this match link.")){match=defaultMatch();render();persist();notice("Match reset.");}};
+$("shareBtn").onclick=async()=>{const url=location.href;if(navigator.share){try{await navigator.share({title:"Live Cricket Score",url});}catch{}}else{try{await navigator.clipboard.writeText(url);notice("Match link copied. Share it on WhatsApp.");}catch{notice("Copy the page URL from your browser and share it.");}}};
+$("copyBtn").onclick=async()=>{try{await navigator.clipboard.writeText(location.href);notice("Match link copied. Share it on WhatsApp.");}catch{notice("Copy this page's URL from the browser address bar.");}};
+$("loginBtn").onclick=async()=>{if(!configured)return notice("First paste your Firebase config into index.html.");try{await signInWithEmailAndPassword(auth,$("email").value.trim(),$("password").value);notice("Scorer logged in.");}catch(e){notice("Login failed: "+e.message);}};
+$("logoutBtn").onclick=()=>signOut(auth);
+if(!configured){match=defaultMatch();render();notice("Setup needed: create Firebase project and paste its web config into index.html.");}
+else{
+ app=initializeApp(firebaseConfig);auth=getAuth(app);db=getDatabase(app);
+ onAuthStateChanged(auth,user=>{currentUser=user;$("controls").classList.toggle("hidden",!user);$("logoutBtn").classList.toggle("hidden",!user);notice(user?"Scorer logged in. Live updates connected.":"Live scoreboard connected. Scorer login required to edit.");});
+ onValue(ref(db,`matches/${safePath}`),snap=>{if(snap.exists()){match=snap.val();render();}else{match=defaultMatch();render();if(currentUser)persist();}});
+}
+</script>
+</body>
+</html>
+
